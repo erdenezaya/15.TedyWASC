@@ -17,6 +17,7 @@
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const catById = Object.fromEntries(CATEGORIES.map((c) => [c.id, c]));
   const topicById = Object.fromEntries(TOPICS.map((t) => [t.id, t]));
+  const hasViz = (id) => typeof VIZ !== "undefined" && typeof VIZ[id] === "function";
   const shuffle = (arr) => { const a = arr.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
 
   // ── learned / self-marking state ──
@@ -114,6 +115,7 @@
         <div class="mn">${esc(t.titleMn)}</div>
         <div class="meta">
           <span class="pill">${n} асуулт</span>
+          ${hasViz(t.id) ? `<span class="pill verb">◆ Дүрслэлтэй</span>` : ""}
           ${learned.has(t.id) ? `<span class="pill done">✓ Сурсан</span>` : ""}
         </div>`;
       grid.appendChild(a);
@@ -135,6 +137,8 @@
       <div class="explain">${t.explain.map((p) => `<p>${esc(p)}</p>`).join("")}</div>
       ${t.analogy ? `<div class="analogy"><strong>Зүйрлэл</strong>${esc(t.analogy)}</div>` : ""}
 
+      ${hasViz(id) ? `<div class="section-label">Дүрслэл</div><div class="card viz" id="viz"></div>` : ""}
+
       <div class="section-label">2 · Key terms: marker-ийн хайдаг үгс</div>
       <table class="kw"><thead><tr><th>English keyword</th><th>Монгол утга</th></tr></thead>
         <tbody>${t.keywords.map(([en, mn]) => `<tr><td>${esc(en)}</td><td>${esc(mn)}</td></tr>`).join("")}</tbody></table>
@@ -155,6 +159,10 @@
         <button class="btn ${learned.has(id) ? "" : "primary"}" id="learnBtn">${learned.has(id) ? "✓ Сурсан гэж тэмдэглэсэн" : "Сурсан гэж тэмдэглэх"}</button>
         <a class="btn" href="#/drill?t=${id}">Энэ сэдвээр санамсаргүй дадлага</a>
       </div>`;
+    if (hasViz(id)) {
+      try { VIZ[id](app.querySelector("#viz")); }
+      catch (e) { app.querySelector("#viz").textContent = "Дүрслэлийг ачаалж чадсангүй."; }
+    }
     const core = app.querySelector("#core");
     POOL.filter((q) => q.topic === id && q.kind === "core").forEach((q) => core.appendChild(questionCard(q)));
     const vbox = app.querySelector("#variants");
